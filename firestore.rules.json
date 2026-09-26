@@ -1,3 +1,51 @@
-{
-  "firestoreRules": "rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n\n    function isSignedIn() {\n      return request.auth != null;\n    }\n\n    // A user may only change their OWN document.\n    // user docs are keyed by an email-encoded id (e.g. user_gmail_com) and carry an\n    // `authUid` field equal to the Firebase Authentication UID, so we compare on that.\n    match /users/{userId} {\n      allow read: if isSignedIn();\n\n      // Registration creates the doc. The app sets authUid = the signed-in user's UID.\n      allow create: if isSignedIn();\n      allow update: if isSignedIn() &&\n        get(/databases/$(database)/documents/users/$(userId)).data.authUid == request.auth.uid;\n      // Account deletion is handled server-side; do not allow raw deletes from devices.\n      allow delete: if false;\n    }\n\n    match /posts/{postId} {\n      allow read: if isSignedIn();\n      allow write: if isSignedIn();\n    }\n\n    match /bookings/{bookingId} {\n      allow read: if isSignedIn();\n      allow write: if isSignedIn();\n    }\n\n    match /reviews/{reviewId} {\n      allow read: if isSignedIn();\n      allow write: if isSignedIn();\n    }\n\n    match /reports/{reportId} {\n      allow read: if isSignedIn();\n      allow write: if isSignedIn();\n    }\n\n    match /chats/{sessionId} {\n      allow read: if isSignedIn();\n      allow write: if isSignedIn();\n      match /messages/{messageId} {\n        allow read, write: if isSignedIn();\n      }\n    }\n  }\n}\n"
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // A user may only change their OWN document.
+    // user docs are keyed by an email-encoded id (e.g. user_gmail_com) and carry an
+    // `authUid` field equal to the Firebase Authentication UID, so we compare on that.
+    match /users/{userId} {
+      allow read: if isSignedIn();
+
+      // Registration creates the doc. The app sets authUid = the signed-in user's UID.
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(userId)).data.authUid == request.auth.uid;
+      // Account deletion is handled server-side; do not allow raw deletes from devices.
+      allow delete: if false;
+    }
+
+    match /posts/{postId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    match /bookings/{bookingId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    match /reports/{reportId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    match /chats/{sessionId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+      match /messages/{messageId} {
+        allow read, write: if isSignedIn();
+      }
+    }
+  }
 }
