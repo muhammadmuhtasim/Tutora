@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "732020799384",
+    "project_id": "tutora-25e43",
+    "storage_bucket": "tutora-25e43.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:732020799384:android:062512da1574089ff39ded",
+        "android_client_info": {
+          "package_name": "com.example.tutora"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOZn71a54i3WVTz0jVtbEu5oUPb4XVZI0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

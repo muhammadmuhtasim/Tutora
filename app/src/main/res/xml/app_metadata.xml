@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AppFunctionAppMetadata xmlns:appfn="http://schemas.android.com/apk/androidx.appfunctions"
+    appfn:description="Tutora helps students find tutors and tutors find students for home tuition.
+    Operational Patterns:
+    - Use 'searchPosts' to find available tutors or students nearby.
+    - Use 'getBookingStatus' to check the progress of a tuition booking."
+    appfn:displayDescription="Tutora Search and Booking" />

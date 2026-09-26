@@ -1,0 +1,9 @@
+com.example.tutora.data-pngs-0 /home/kali/AndroidStudioProjects/Tutora/data/build/generated/res/pngs/debug
+com.example.tutora.data-updated_navigation_xml-1 /home/kali/AndroidStudioProjects/Tutora/data/build/generated/updated_navigation_xml/debug
+com.example.tutora.data-mergeDebugResources-2 /home/kali/AndroidStudioProjects/Tutora/data/build/intermediates/incremental/debug/mergeDebugResources/merged.dir
+com.example.tutora.data-mergeDebugResources-3 /home/kali/AndroidStudioProjects/Tutora/data/build/intermediates/incremental/debug/mergeDebugResources/stripped.dir
+com.example.tutora.data-debug-4 /home/kali/AndroidStudioProjects/Tutora/data/build/intermediates/merged_res/debug/mergeDebugResources
+com.example.tutora.data-debug-5 /home/kali/AndroidStudioProjects/Tutora/data/build/intermediates/packaged_res/debug/packageDebugResources
+com.example.tutora.data-debug-6 /home/kali/AndroidStudioProjects/Tutora/data/src/debug/res
+com.example.tutora.data-main-7 /home/kali/AndroidStudioProjects/Tutora/data/src/main/res
+gradleHome-0 /home/kali/.gradle
