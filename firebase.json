@@ -3,7 +3,7 @@
     "rules": "firestore.rules.json",
     "indexes": "firestore.indexes.json"
   },
-  "storage": {
-    "rules": "storage.rules.json"
+  "database": {
+    "rules": "database.rules.json"
   }
 }

@@ -19,13 +19,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.example.tutora.ui.components.TutoraLoadingIndicator
 import com.example.tutora.ui.components.FloatingBackButton
+import com.example.tutora.ui.components.ProfileImageContent
 import com.example.tutora.ui.location.LocationInputField
 import com.example.tutora.ui.theme.TutoraStyles
 
@@ -234,12 +232,7 @@ fun ProfilePictureSection(
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             } else if (profileImageUrl.isNotEmpty()) {
-                AsyncImage(
-                    model = profileImageUrl,
-                    contentDescription = "Profile picture",
-                    modifier = Modifier.fillMaxSize().clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
+                ProfileImageContent(profileImageUrl)
             } else {
                 Box(contentAlignment = Alignment.Center) {
                     Text(

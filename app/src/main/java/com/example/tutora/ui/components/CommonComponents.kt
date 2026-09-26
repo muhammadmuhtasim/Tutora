@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.decodeToImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -18,6 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import java.util.Base64
 import com.example.tutora.ui.theme.TutoraStyles
 import com.example.tutora.ui.theme.TutoraStyles.bounceClickable
 
@@ -158,7 +160,8 @@ fun FloatingBackButton(
 
 /**
  * Circular profile picture. Shows the image when [imageUrl] is non-empty,
- * otherwise falls back to the initial letter of [name].
+ * otherwise falls back to the initial letter of [name]. Accepts a normal HTTP(S)
+ * URL or a base64 `data:` URL (as used by the Realtime Database avatar store).
  */
 @Composable
 fun ProfileAvatar(
@@ -173,12 +176,7 @@ fun ProfileAvatar(
         color = MaterialTheme.colorScheme.primaryContainer
     ) {
         if (imageUrl.isNotEmpty()) {
-            AsyncImage(
-                model = imageUrl,
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize().clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
+            ProfileImageContent(imageUrl)
         } else {
             Box(contentAlignment = Alignment.Center) {
                 Text(
@@ -189,5 +187,38 @@ fun ProfileAvatar(
                 )
             }
         }
+    }
+}
+
+/**
+ * Renders an image that may be a normal URL or a `data:` URL. Data URLs are
+ * decoded to a bitmap so they render without relying on a network image loader.
+ */
+@Composable
+fun ProfileImageContent(imageUrl: String) {
+    if (imageUrl.startsWith("data:")) {
+        val bitmap = try {
+            val comma = imageUrl.indexOf(',')
+            val base64 = imageUrl.substring(comma + 1)
+            val bytes = Base64.getDecoder().decode(base64)
+            bytes.decodeToImageBitmap()
+        } catch (_: Exception) {
+            null
+        }
+        if (bitmap != null) {
+            AsyncImage(
+                model = bitmap,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize().clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        }
+    } else {
+        AsyncImage(
+            model = imageUrl,
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize().clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
     }
 }

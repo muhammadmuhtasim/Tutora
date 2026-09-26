@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.example.tutora.data.LocationRepositoryImplTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-09-26T19:43:21.905Z" hostname="kali" time="12.784">
+<testsuite name="com.example.tutora.data.LocationRepositoryImplTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-09-26T21:19:29.692Z" hostname="kali" time="11.078">
   <properties/>
-  <testcase name="geocode calls findAutocompletePredictions on PlacesClient" classname="com.example.tutora.data.LocationRepositoryImplTest" time="12.762"/>
+  <testcase name="geocode calls findAutocompletePredictions on PlacesClient" classname="com.example.tutora.data.LocationRepositoryImplTest" time="11.046"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[WARNING: A Java agent has been loaded dynamically (/home/kali/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy-agent/1.18.2/62f38a6faf7f069d661b79a07d566f504b0b20c4/byte-buddy-agent-1.18.2.jar)
 WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
