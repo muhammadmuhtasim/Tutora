@@ -1,0 +1,453 @@
+================================================================================
+                        TUTORA APP DOCUMENTATION
+================================================================================
+
+--------------------------------------------------------------------------------
+1. FEATURES
+--------------------------------------------------------------------------------
+
+1. User Authentication & Account Management:
+   - Email and password registration with role selection (Student or Tutor).
+   - Secure login with Firebase Authentication and local shadow user session caching.
+   - Account recovery mechanism: "Forgot Email" via phone number lookup and "Forgot Password" via secure direct password reset.
+   - Profile management: Update profile details including name, bio, qualifications, phone number, region, geolocation coordinates, and contact details list.
+   - Light and Dark mode theme switching powered by persistent ThemeManager.
+   - Permanent account deletion with cleanup of Firebase Auth account and Firestore user document.
+
+2. Geolocation-Based Tuition Explorer & Search:
+   - Location-aware discovery of tuition posts powered by GeoFire geohashing.
+   - Dual tuition post classifications: Tuition Requests (by Students) and Tuition Offers (by Tutors).
+   - Configurable search radius slider (1 km to 100 km) centered on user location.
+   - Comprehensive multi-criteria filtering: Grade/Class level, Min/Max price (BDT rate), Tag chips (e.g., Online, Home, Math, English, Science, Arts), and Minimum star rating.
+   - Live search bar supporting full-text keyword query matching across tutor/creator names, subjects, and post descriptions.
+   - Hearting/Liking posts to save to a dedicated Favorites list, with real-time like count increments.
+   - Post view counter automatically tracking engagement.
+   - Pull-to-refresh mechanism for real-time post feed updates.
+   - Adaptive responsive UI layout: Dual-pane grid layout on tablets and large screens, modal bottom sheet on phone devices.
+
+3. Post Creation & Management:
+   - Dedicated Post Creation dialogs supporting subject tags, grade/class specification, session duration, weekly frequency, rate in BDT, detailed descriptions, and geohashed location.
+   - Full post management: Edit existing posts or delete created posts.
+
+4. Booking Request & Lifecycle State Engine:
+   - Step-by-step booking request flow: Schedule Date/Time Picker -> Summary & Confirmation -> Success Confirmation.
+   - Strict finite state engine (BookingStateEngine) governing booking transitions:
+     PENDING -> ACCEPTED / REJECTED / CANCELLED
+     ACCEPTED -> PREPARING / CANCELLED
+     PREPARING -> ON_THE_WAY / CANCELLED
+     ON_THE_WAY -> ARRIVED / CANCELLED
+     ARRIVED -> COMPLETED / CANCELLED
+     COMPLETED -> Rate & Review / Delete
+   - Conditional Contact Visibility: Student and Tutor contact information is safely revealed only when a booking is confirmed/active.
+   - Booking history tracking and state transition actions (Approve, Reject, Start Preparing, Start Journey, Mark Arrived, Complete, Cancel, Delete).
+
+5. Real-Time 1-on-1 Messaging / Chat System:
+   - Real-time chat messaging using Firestore snapshot listeners.
+   - Grouped message bubbles organized chronologically by date headers ("Today", "Yesterday", or specific dates).
+   - Options menu inside chat: View Public Profile, Clear Messages, Delete Conversation, Block/Unblock User, and Report User with custom reason.
+   - Automated block enforcement preventing blocked users from transmitting messages.
+
+6. Public Profile & Rating System:
+   - Public profile view displaying bio, qualifications, rating star average, total review count, posted reviews, and active posts.
+   - Rating and review submission upon completion of tuition bookings. Automatically recalculates user's average rating and total review tally in Firestore.
+   - Safety & moderation: User blocking, unblocking, and reporting framework.
+
+7. Android AppFunctions Integration (Device AI / Assistant):
+   - Integration with Android AppFunctions framework (`TutoraAppFunctions`).
+   - Exposes system-level workflows for AI agents: `searchPosts`, `createPost`, `getBookingStatus`, `acceptBooking`, and `likePost`.
+
+
+--------------------------------------------------------------------------------
+2. USER FLOW
+--------------------------------------------------------------------------------
+
+[1] Onboarding & Authentication Flow:
+    Splash Screen -> Check Current User Session (`getCurrentUser()`)
+      |--> Authenticated -> Explorer Screen
+      |--> Unauthenticated -> Login Screen
+            |--> Enter credentials -> Login -> Explorer Screen
+            |--> Tap "Create New Account" -> Registration Screen -> Select Role (Student/Tutor) & Fill details -> Explorer Screen
+            |--> Tap "Forgot Email?" -> Forgot Email Screen -> Input Phone Number -> View Registered Email
+            |--> Tap "Forgot Password?" -> Forgot Password Screen -> Input Email & New Password -> Reset -> Login Screen
+
+[2] Discovery & Exploration Flow:
+    Explorer Screen
+      |--> Switch Tabs: "All", "Tuition Requests", "Tuition Offers"
+      |--> Toggle Search Bar / Type Query -> Instant Filtering
+      |--> Open Filter Panel -> Adjust Distance Radius, Grade, Min/Max Price, Min Rating
+      |--> Tap Quick Tag Chips (Online, Home, Math, Science, etc.)
+      |--> Tap Heart Icon on Post -> Add/Remove from Favorites Screen
+      |--> Tap Post Card -> View Post Details (Side Pane on Tablet / Bottom Sheet on Phone)
+      |      |--> Tap "View Profile" -> Public Profile Screen
+      |      |--> Tap "Book" -> Booking Flow Screen
+      |--> Tap Floating Action Button (+) -> Create Post Modal Dialog
+
+[3] Booking & Lifecycle Flow:
+    Booking Flow Screen
+      |--> Step 1 (Schedule): Pick Date from DatePicker -> Pick Time from TimePicker -> Continue
+      |--> Step 2 (Summary): Review Tutor, Subject, Schedule Date/Time, Duration -> Send Request
+      |--> Step 3 (Success): Confirmation Screen -> Return to Explorer
+    Bookings List Screen (Bottom Nav)
+      |--> View Active / Past Bookings
+      |--> If Tutor: Approve or Reject Pending Request
+      |--> Advance States: Start Preparing -> Start Journey -> Mark Arrived -> Complete Session
+      |--> Unlocked Contact Info: View phone / email once booking is accepted
+      |--> Tap Chat Icon -> Open Chat Screen
+      |--> When Completed: Tap "Rate & Review" -> Submit 1-5 Star Rating & Review Comment
+
+[4] Real-Time Messaging Flow:
+    Messages Screen (Bottom Nav)
+      |--> View Active Chat Sessions list
+      |--> Tap Chat Session -> Open Chat Screen
+      |--> Type and Send Real-Time Messages
+      |--> Top Right Menu Options: View Profile, Clear Messages, Block/Unblock User, Report User, Delete Conversation
+
+[5] Profile & Settings Flow:
+    Profile Screen (Bottom Nav)
+      |--> View Own Profile Info, Ratings, Reviews, and Posted Tuitions
+      |--> Tap Settings Gear Icon -> Settings Screen
+            |--> Toggle Dark / Light Theme
+            |--> View Blocked Users List -> Unblock
+            |--> Tap "Edit Profile" -> Edit Profile Screen (Update Name, Bio, Qualification, Phone, Location)
+            |--> Tap "Delete Account" -> Confirmation Dialog -> Delete Auth & Firestore Record -> Login Screen
+            |--> Tap "Logout" -> Sign Out -> Login Screen
+
+
+--------------------------------------------------------------------------------
+3. USER TYPES
+--------------------------------------------------------------------------------
+
+1. Student:
+   - Primary Objective: Find qualified tutors or request tuition for specific subjects, grade levels, and schedule preferences.
+   - Primary Created Post Type: `TUITION_REQUEST` (Student looking for a tutor).
+
+2. Tutor:
+   - Primary Objective: Offer tutoring services to nearby students based on expertise, qualifications, and rate preferences.
+   - Primary Created Post Type: `TUITION_OFFER` (Tutor offering tutoring services).
+
+
+--------------------------------------------------------------------------------
+4. WHAT CAN A USER DO FROM DIFFERENT ROLES
+--------------------------------------------------------------------------------
+
+[Student Role Capabilities]:
+- Create `TUITION_REQUEST` posts specifying required class, subjects, duration, sessions per week, budget rate (BDT), and location.
+- Search and filter `TUITION_OFFER` posts published by Tutors in the vicinity.
+- Initiate booking requests for tuition sessions with Tutors.
+- Cancel pending or accepted booking requests.
+- Chat in real-time with Tutors regarding session details.
+- View Tutor's contact details once a booking request is accepted.
+- Rate and review Tutors after booking completion.
+- Save favorite Tutor offer posts.
+
+[Tutor Role Capabilities]:
+- Create `TUITION_OFFER` posts specifying subjects taught, qualifications, hourly/monthly rate (BDT), schedule availability, and location.
+- Search and filter `TUITION_REQUEST` posts published by Students in the vicinity.
+- Accept or Reject incoming student booking requests.
+- Progress active booking lifecycle stages (`PREPARING` -> `ON_THE_WAY` -> `ARRIVED` -> `COMPLETED`).
+- Chat in real-time with Students.
+- View Student's contact details once a booking request is accepted.
+- Rate and review Students after booking completion.
+
+[Shared Capabilities (Both Student and Tutor)]:
+- Register, login, recover email, and reset password.
+- Edit personal profile details, set geolocation, and manage contact info lists.
+- Switch app themes (Dark/Light Mode).
+- Block troublesome users and unblock them from settings.
+- Report abusive users or posts with a detailed reason.
+- Delete owned posts or permanently delete own account.
+- Interact with app features via AI agent AppFunctions.
+
+
+--------------------------------------------------------------------------------
+5. WHY IT IS SECURE
+--------------------------------------------------------------------------------
+
+1. Firebase Authentication Integration:
+   - Industry-standard identity management via Firebase Auth with encrypted credential transmission and session tokens.
+   - Account deletion requires recent authentication (`FirebaseAuthRecentLoginRequiredException`) to prevent unauthorized deletion.
+
+2. Access Control & Strict Data Partitioning:
+   - Firestore user profiles are tied strictly to sanitized user document paths (`users/$docId`).
+   - Chat blocking rules enforced directly in data layer code (`ChatRepositoryImpl.sendMessage` verifies if sender is in target user's `blockedUserIds` array before allowing document creation).
+   - Sensitive contact information is restricted and hidden by default, exposed only via `contactVisibleToTutor` and `contactVisibleToStudent` flags on active bookings.
+
+3. Finite State Machine Validation:
+   - `BookingStateEngine` enforces strict, valid state transitions (e.g., prohibiting direct jumps from `PENDING` to `COMPLETED`).
+   - Prevents unauthorized or invalid status manipulation during booking workflows.
+
+4. Data Normalization & Input Handling:
+   - Normalized document IDs (`getEmailDocId`) sanitize special characters (`.` -> `_dot_`, `@` -> `_at_`) avoiding path injection issues.
+   - User inputs sanitized and bounds-checked across ViewModels and Repositories.
+
+5. Moderation & Privacy Protections:
+   - User blocking functionality prevents unwanted interactions or messages.
+   - User reporting logs potential policy violations directly into a secure `reports` collection.
+   - Comprehensive account wipe clears both Authentication credentials and Firestore user documents.
+
+
+--------------------------------------------------------------------------------
+6. EVERY ACTIVITY A USER CAN DO IN THE APP (EXHAUSTIVE LIST)
+--------------------------------------------------------------------------------
+
+ 1. Launch App & View Animated Splash Screen.
+ 2. Register Account (Select Role: Student/Tutor, Name, Email, Password, Phone, Region, Bio, Qualification).
+ 3. Login to Account using Email and Password.
+ 4. Recover Forgotten Email by entering registered Phone Number.
+ 5. Reset Password by providing registered Email and New Password.
+ 6. Capture Current Geolocation using GPS / Location Services or Geocoder.
+ 7. Browse Tuition Posts on the Explorer Screen feed.
+ 8. Filter Posts by Distance Radius (1km - 100km slider).
+ 9. Filter Posts by Grade / Class level.
+10. Filter Posts by Price Range (Min / Max BDT rate).
+11. Filter Posts by Subject Tag Chips (Online, Home, Math, English, Science, Arts).
+12. Filter Posts by Minimum Rating Star requirement.
+13. Search Posts using full-text keywords (creator name, subjects, or description).
+14. Switch Explorer Tabs ("All", "Tuition Requests", "Tuition Offers").
+15. Pull down to Refresh Post Feed.
+16. View Detailed Post Information in Modal Bottom Sheet or Side Panel.
+17. Like / Favorite a Post (increments post likes count and adds to Favorites).
+18. View Favorites List on the Favorites Screen.
+19. Create a New Tuition Post (Request or Offer).
+20. Edit Owned Tuition Post.
+21. Delete Owned Tuition Post.
+22. View Public Profile of another user (Bio, Qualifications, Ratings, Reviews, Posts).
+23. Initiate Booking Flow for a tuition post.
+24. Select Starting Session Date via DatePicker.
+25. Select Starting Session Time via TimePicker.
+26. Review Booking Summary & Submit Request.
+27. View Booking History list under Bookings Tab.
+28. Approve Pending Booking Request (Tutor).
+29. Reject Pending Booking Request (Tutor).
+30. Cancel Booking Request (Student / Tutor).
+31. Advance Booking Progress to "Preparing" (Tutor).
+32. Advance Booking Progress to "On The Way" (Tutor).
+33. Advance Booking Progress to "Arrived" (Tutor).
+34. Complete Booking Session (Tutor).
+35. View Unlocked Contact Information for accepted bookings.
+36. Rate and Review User with 1-5 Star Rating & Comment text.
+37. Open 1-on-1 Chat Session with another user.
+38. Send Real-Time Text Message in Chat.
+39. View Date-Grouped Message History in Chat.
+40. Clear All Messages in a Chat Session.
+41. Delete Entire Chat Conversation.
+42. Block User from Chat menu or Settings.
+43. Unblock User from Settings screen.
+44. Report User for inappropriate conduct with reason details.
+45. View Own Profile details, rating summary, and published posts under Profile Tab.
+46. Edit Profile Information (Name, Bio, Qualification, Phone, Region, Geolocation, Contacts).
+47. Toggle Dark / Light Mode Theme dynamically.
+48. Toggle Notification Preferences.
+49. Logout of App.
+50. Permanently Delete Account and Data.
+51. Execute App Functions via AI Assistant (`searchPosts`, `createPost`, `getBookingStatus`, `acceptBooking`, `likePost`).
+
+
+--------------------------------------------------------------------------------
+7. ARCHITECTURE, DATABASE DESIGN, AND DATAFLOW DIAGRAM
+--------------------------------------------------------------------------------
+
+[1] ARCHITECTURE OVERVIEW:
+    The app follows Clean Architecture principles combined with MVVM and Jetpack Compose UI.
+
+    Modular Structure:
+    - `:domain` Module (Pure Kotlin, Framework-independent):
+        Contains core Entity models (User, Post, Booking, ChatMessage, ChatSession, Review, Report),
+        Enums (UserRole, PostType, BookingStatus), Interface contracts (AuthRepository, PostRepository,
+        BookingRepository, ChatRepository, LocationRepository), BookingStateEngine finite state engine,
+        and Use Cases (SearchPostsUseCase, CreatePostUseCase, ManageBookingUseCase).
+
+    - `:data` Module (Android Library):
+        Implements Repository interfaces utilizing Firebase Auth, Firebase Firestore, GeoFireUtils for
+        geohash querying, FusedLocationProviderClient, and Google Places Client.
+
+    - `:app` Module (Android Application):
+        UI layer built with Jetpack Compose, Navigation 3 (`androidx.navigation3`), Dagger Hilt DI
+        (`@HiltViewModel`, `@AndroidEntryPoint`), state flows (`StateFlow`, `collectAsStateWithLifecycle`),
+        and Android `AppFunctions` agent integration.
+
+
+[2] DATABASE DESIGN (Firebase Firestore Collections Schema):
+
+  1) `users` Collection:
+     - Document ID: `getEmailDocId(email)` (Normalized lowercase email, e.g., `student1_at_gmail_dot_com`)
+     - Fields:
+       * id: String
+       * authUid: String
+       * name: String
+       * role: String ("STUDENT" | "TUTOR")
+       * email: String
+       * password: String
+       * phoneNumber: String
+       * region: String
+       * location: GeoPoint { latitude: Double, longitude: Double }
+       * qualification: String
+       * bio: String
+       * rating: Double
+       * totalReviews: Int
+       * contactInfo: List<String>
+       * favorites: List<String> (Post IDs)
+       * blockedUserIds: List<String> (User IDs)
+       * profileImageUrl: String
+
+  2) `posts` Collection:
+     - Document ID: UUID String
+     - Fields:
+       * id: String
+       * creatorId: String
+       * creatorName: String
+       * type: String ("TUITION_REQUEST" | "TUITION_OFFER")
+       * classType: String
+       * subjects: List<String>
+       * sessionLength: String
+       * sessionsPerWeek: Int
+       * location: GeoPoint { latitude: Double, longitude: Double }
+       * geohash: String (GeoFire index hash)
+       * amount: Double
+       * createdAt: Long (Timestamp)
+       * description: String
+       * tags: List<String>
+       * likesCount: Int
+       * viewsCount: Int
+
+  3) `bookings` Collection:
+     - Document ID: UUID String
+     - Fields:
+       * id: String
+       * postId: String
+       * studentId: String
+       * tutorId: String
+       * status: String ("PENDING" | "ACCEPTED" | "REJECTED" | "PREPARING" | "ON_THE_WAY" | "ARRIVED" | "COMPLETED" | "CANCELLED")
+       * timestamp: Long
+       * contactVisibleToTutor: Boolean
+       * contactVisibleToStudent: Boolean
+       * trackingProgress: Float
+       * sessionDate: String
+       * sessionTime: String
+       * scheduledEndTimestamp: Long
+       * cancellationTimestamp: Long?
+
+  4) `chats` Collection:
+     - Document ID: `sessionId` (Sorted participant IDs joined by `_`, e.g., `userA_userB`)
+     - Fields:
+       * id: String
+       * participantIds: List<String>
+       * lastMessage: String
+       * lastTimestamp: Long
+     - Sub-collection `messages`:
+       * Document ID: UUID String
+       * Fields:
+         - id: String
+         - senderId: String
+         - text: String
+         - timestamp: Long
+
+  5) `reviews` Collection:
+     - Document ID: UUID String
+     - Fields:
+       * id: String
+       * reviewerId: String
+       * targetUserId: String
+       * rating: Int (1 - 5)
+       * comment: String
+       * timestamp: Long
+
+  6) `reports` Collection:
+     - Document ID: Auto-generated String
+     - Fields:
+       * id: String
+       * reporterId: String
+       * targetUserId: String
+       * targetPostId: String?
+       * reason: String
+       * timestamp: Long
+
+
+[3] DATAFLOW DIAGRAMS:
+
+  A) High-Level Architecture Layer Flow:
+
+     +-------------------------------------------------------------+
+     |                  Jetpack Compose UI Screens                 |
+     |  (Explorer, Bookings, Chat, Profile, Login, Settings, etc.) |
+     +------------------------------+------------------------------+
+                                    |
+                                    v  StateFlow / Events
+     +-------------------------------------------------------------+
+     |                       Hilt ViewModels                       |
+     | (ExplorerVM, BookingVM, ChatVM, ProfileVM, LoginVM, etc.)   |
+     +------------------------------+------------------------------+
+                                    |
+                                    v  Domain Calls
+     +-------------------------------------------------------------+
+     |            Domain Layer (Use Cases & Engine)                |
+     | (SearchPostsUseCase, CreatePostUseCase, BookingStateEngine) |
+     +------------------------------+------------------------------+
+                                    |
+                                    v  Interfaces
+     +-------------------------------------------------------------+
+     |                 Repository Implementations                  |
+     | (AuthRepoImpl, PostRepoImpl, BookingRepoImpl, ChatRepoImpl) |
+     +------------------------------+------------------------------+
+                                    |
+                                    v  SDK Operations
+     +-------------------------------------------------------------+
+     |               Firebase & Android Services                   |
+     | (Firebase Auth, Firestore DB, GeoFire, Fused Location)      |
+     +-------------------------------------------------------------+
+
+
+  B) Geo-Location Search Dataflow:
+
+     [User Location (GeoPoint)]
+                 |
+                 v
+     [PostRepositoryImpl.getPosts(center, radiusKm)]
+                 |
+                 v
+     [GeoFireUtils.getGeoHashQueryBounds(center, radiusMeters)]
+                 |
+                 v
+     [Firestore Query 'posts' by geohash range (startHash .. endHash)]
+                 |
+                 v
+     [Filter by GeoFireUtils.getDistanceBetween() <= radiusMeters]
+                 |
+                 v
+     [In-Memory Filtering: Type, Class, Subjects, Tags, Price, Query]
+                 |
+                 v
+     [Emit Sorted List<Post> via Kotlin Flow]
+                 |
+                 v
+     [ExplorerViewModel -> ExplorerUiState -> Compose UI Grid]
+
+
+  C) Real-Time Chat Message Dataflow:
+
+     [User Types Message] -> [ChatScreen]
+                                  |
+                                  v
+                  [ChatViewModel.sendMessage(text)]
+                                  |
+                                  v
+             [ChatRepositoryImpl.sendMessage(sessionId, msg)]
+                                  |
+                                  +--> Check target user blocked list
+                                  |
+                                  v
+            [Firestore write: chats/{sessionId}/messages/{msgId}]
+            [Firestore merge update: chats/{sessionId} lastMessage]
+                                  |
+                                  v
+         [Firestore SnapshotListener triggers on all listening devices]
+                                  |
+                                  v
+              [Flow<List<ChatMessage>> updates StateFlow]
+                                  |
+                                  v
+              [ChatScreen LazyColumn updates in Real-Time]
+
+================================================================================
+                            END OF DOCUMENTATION
+================================================================================
