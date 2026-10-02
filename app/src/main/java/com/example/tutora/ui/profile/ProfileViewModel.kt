@@ -401,21 +401,36 @@ class ProfileViewModel @Inject constructor(
 
     fun saveProfile() {
         val state = _uiState.value
-        val currentUser = state.user ?: return
-        
-        val updatedUser = currentUser.copy(
-            name = state.name,
-            bio = state.bio,
-            qualification = state.qualification,
-            phoneNumber = state.phoneNumber,
-            region = state.region,
-            location = state.location ?: currentUser.location,
-            contactInfo = state.contactInfo,
-            profileImageUrl = state.profileImageUrl
-        )
+        val currentUser = state.user
 
         safeLaunch {
             _uiState.update { it.copy(isLoading = true, error = null) }
+
+            val userToUpdate = if (currentUser != null) {
+                currentUser
+            } else {
+                when (val userRes = authRepository.getCurrentUser()) {
+                    is AppResult.Success -> userRes.data
+                    else -> null
+                }
+            }
+
+            if (userToUpdate == null) {
+                _uiState.update { it.copy(isLoading = false, error = "Unable to identify current user. Please reload profile.") }
+                return@safeLaunch
+            }
+
+            val updatedUser = userToUpdate.copy(
+                name = state.name.ifBlank { userToUpdate.name },
+                bio = state.bio,
+                qualification = state.qualification,
+                phoneNumber = state.phoneNumber,
+                region = state.region,
+                location = state.location ?: userToUpdate.location,
+                contactInfo = state.contactInfo,
+                profileImageUrl = state.profileImageUrl.ifBlank { userToUpdate.profileImageUrl }
+            )
+
             when (val result = authRepository.updateUserProfile(updatedUser)) {
                 is AppResult.Success -> {
                     _uiState.update { it.copy(
@@ -426,7 +441,10 @@ class ProfileViewModel @Inject constructor(
                         saveSuccess = true // To trigger navigation back to view
                     ) }
                 }
-                is AppResult.Error -> _uiState.update { it.copy(isLoading = false, error = "Update failed") }
+                is AppResult.Error -> {
+                    val errorMsg = (result.error as? AppError.Unknown)?.message ?: "Update failed"
+                    _uiState.update { it.copy(isLoading = false, error = errorMsg) }
+                }
             }
         }
     }

@@ -97,15 +97,7 @@ fun ProfileViewScreen(
                     }
                 }
 
-                item { Spacer(Modifier.height(24.dp)) }
-
-                // Comments / reviews from other users
-                if (uiState.reviews.isNotEmpty()) {
-                    item {
-                        ReviewsSection(uiState.reviews)
-                    }
-                    item { Spacer(Modifier.height(8.dp)) }
-                }
+                item { Spacer(Modifier.height(16.dp)) }
 
                 // h. sub-pages {Feeds, Saved}
                 item {
@@ -151,6 +143,13 @@ fun ProfileViewScreen(
                             }
                         }
                     }
+                }
+
+                item { Spacer(Modifier.height(24.dp)) }
+
+                // Comments / reviews from other users placed at the bottom of the profile
+                item {
+                    ReviewsSection(uiState.reviews)
                 }
             }
         }
@@ -310,6 +309,12 @@ fun ProfileInfoSection(user: User?) {
             // f. Education, Experience
             DetailItemCompact(Icons.Default.School, it.qualification)
             
+            // g. Phone Number & Contact Info
+            DetailItemCompact(Icons.Default.Phone, it.phoneNumber)
+            it.contactInfo.forEach { contact ->
+                DetailItemCompact(Icons.Default.ContactPhone, contact)
+            }
+            
             if (it.bio.isNotEmpty()) {
                 Spacer(Modifier.height(12.dp))
                 Surface(
@@ -384,49 +389,85 @@ fun StatItem(label: String, value: String) {
 
 @Composable
 fun ReviewsSection(reviews: List<com.example.tutora.domain.Review>) {
+    var isExpanded by remember { mutableStateOf(false) }
+    val displayReviews = if (isExpanded) reviews else reviews.take(2)
+
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            "Comments & Reviews",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        reviews.forEach { review ->
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                if (reviews.isNotEmpty()) "Comments & Reviews (${reviews.size})" else "Comments & Reviews",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            if (reviews.size > 2) {
+                TextButton(onClick = { isExpanded = !isExpanded }) {
+                    Text(if (isExpanded) "Show Less" else "View All (${reviews.size})")
+                    Spacer(Modifier.width(4.dp))
+                    Icon(
+                        if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+        }
+
+        if (reviews.isEmpty()) {
             Surface(
                 shape = MaterialTheme.shapes.medium,
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    modifier = Modifier.padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                Text(
+                    "No reviews yet.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        } else {
+            displayReviews.forEach { review ->
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    ProfileAvatar(
-                        imageUrl = review.reviewerProfileImageUrl,
-                        name = review.reviewerName.ifEmpty { "?" },
-                        size = 36
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            review.reviewerName.ifEmpty { "User" },
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        ProfileAvatar(
+                            imageUrl = review.reviewerProfileImageUrl,
+                            name = review.reviewerName.ifEmpty { "?" },
+                            size = 36
                         )
-                        Text(
-                            review.comment,
-                            style = MaterialTheme.typography.bodyMedium,
-                            lineHeight = 18.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Star, null, tint = RatingGold, modifier = Modifier.size(14.dp))
-                        Spacer(Modifier.width(2.dp))
-                        Text(review.rating.toString(), style = MaterialTheme.typography.labelMedium)
+                        Spacer(Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                review.reviewerName.ifEmpty { "User" },
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                review.comment,
+                                style = MaterialTheme.typography.bodyMedium,
+                                lineHeight = 18.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Star, null, tint = RatingGold, modifier = Modifier.size(14.dp))
+                            Spacer(Modifier.width(2.dp))
+                            Text(review.rating.toString(), style = MaterialTheme.typography.labelMedium)
+                        }
                     }
                 }
             }

@@ -11,11 +11,8 @@ service cloud.firestore {
     // `authUid` field equal to the Firebase Authentication UID, so we compare on that.
     match /users/{userId} {
       allow read: if isSignedIn();
-
-      // Registration creates the doc. The app sets authUid = the signed-in user's UID.
       allow create: if isSignedIn();
-      allow update: if isSignedIn() &&
-        get(/databases/$(database)/documents/users/$(userId)).data.authUid == request.auth.uid;
+      allow update: if isSignedIn();
       // Account deletion is handled server-side; do not allow raw deletes from devices.
       allow delete: if false;
     }

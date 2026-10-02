@@ -28,7 +28,7 @@ data class ExplorerUiState(
     val isSearchActive: Boolean = false,
     val error: String? = null,
     val userRole: UserRole = UserRole.STUDENT,
-    val radiusKm: Double = 3.0,
+    val radiusKm: Double = 10.0,
     val filters: ExplorerFilters = ExplorerFilters(),
     val searchQuery: String = "",
     val activeTab: ExplorerTab = ExplorerTab.TRENDING,
@@ -209,15 +209,16 @@ class ExplorerViewModel @Inject constructor(
             .toSet()
 
         // Pre-calculate scores and distances once per post
-        val postsWithScores = posts.mapNotNull { post ->
+        val postsWithScores = posts.map { post ->
             val distance = calculateDistance(user.location, post.location)
-            if (distance > trendingRadius) return@mapNotNull null
             
             var score = 0.0
             
             // 1. Proximity (up to 40 pts)
-            val proximityScore = ((trendingRadius - distance) / trendingRadius) * 40.0
-            score += proximityScore.coerceAtLeast(0.0)
+            if (distance <= trendingRadius && distance != Double.MAX_VALUE) {
+                val proximityScore = ((trendingRadius - distance) / trendingRadius) * 40.0
+                score += proximityScore.coerceAtLeast(0.0)
+            }
 
             // 2. Keyword Relevance (up to 30 pts)
             val postKeywords = (post.classType + " " + post.subjects.joinToString(" ")).lowercase()

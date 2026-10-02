@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -19,6 +21,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.tutora.ui.components.TutoraLoadingIndicator
@@ -35,6 +38,10 @@ fun EditProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var newContact by remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit) {
+        viewModel.loadProfile()
+    }
 
     LaunchedEffect(uiState.saveSuccess) {
         if (uiState.saveSuccess && !uiState.isLoading) {
@@ -137,9 +144,17 @@ fun EditProfileScreen(
                             value = newContact,
                             onValueChange = { newContact = it },
                             modifier = Modifier.weight(1f),
-                            placeholder = { Text("Add...") },
+                            placeholder = { Text("Add phone, email or link...") },
+                            singleLine = true,
                             shape = MaterialTheme.shapes.medium,
-                            colors = TutoraStyles.outlinedTextFieldColors()
+                            colors = TutoraStyles.outlinedTextFieldColors(),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = {
+                                if (newContact.isNotBlank()) {
+                                    viewModel.onAddContact(newContact)
+                                    newContact = ""
+                                }
+                            })
                         )
                         IconButton(onClick = { 
                             if (newContact.isNotBlank()) {
@@ -161,7 +176,13 @@ fun EditProfileScreen(
         }
         FloatingBackButton(onBack = onNavigateBack)
         FloatingActionButton(
-            onClick = { viewModel.saveProfile() },
+            onClick = { 
+                if (newContact.isNotBlank()) {
+                    viewModel.onAddContact(newContact)
+                    newContact = ""
+                }
+                viewModel.saveProfile() 
+            },
             modifier = Modifier.align(Alignment.BottomEnd).padding(24.dp).navigationBarsPadding(),
             shape = androidx.compose.foundation.shape.CircleShape,
             containerColor = MaterialTheme.colorScheme.primary,

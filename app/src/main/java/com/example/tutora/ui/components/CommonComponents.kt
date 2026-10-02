@@ -137,7 +137,6 @@ fun FloatingBackButton(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        onClick = onBack,
         modifier = modifier
             .statusBarsPadding()
             .padding(16.dp)
@@ -200,7 +199,7 @@ fun ProfileImageContent(imageUrl: String) {
         val bitmap = try {
             val comma = imageUrl.indexOf(',')
             val base64 = imageUrl.substring(comma + 1)
-            val bytes = Base64.getDecoder().decode(base64)
+            val bytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT)
             bytes.decodeToImageBitmap()
         } catch (_: Exception) {
             null

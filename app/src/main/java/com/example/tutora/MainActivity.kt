@@ -73,17 +73,26 @@ class MainActivity : ComponentActivity() {
 fun MainNavigation(authRepository: AuthRepository) {
     val backStack = remember { mutableStateListOf<Any>(NavRoute.Splash) }
 
+    fun resetToRoute(route: Any) {
+        if (backStack.lastOrNull() == route && backStack.size == 1) return
+        backStack.add(route)
+        while (backStack.size > 1) {
+            backStack.removeAt(0)
+        }
+    }
+
+    val popBack = { if (backStack.size > 1) backStack.removeLastOrNull() }
+
     // Auto-login existing user or navigate to Login if signed out
     LaunchedEffect(Unit) {
         if ((backStack.size == 1) && (backStack[0] == NavRoute.Splash)) {
             val currentUserResult = authRepository.getCurrentUser()
             delay(1000.milliseconds) 
             
-            backStack.clear()
             if (currentUserResult is AppResult.Success && currentUserResult.data != null) {
-                backStack.add(NavRoute.Explorer)
+                resetToRoute(NavRoute.Explorer)
             } else {
-                backStack.add(NavRoute.Login)
+                resetToRoute(NavRoute.Login)
             }
         }
     }
@@ -118,10 +127,7 @@ fun MainNavigation(authRepository: AuthRepository) {
                         ) {
                             NavigationBarItem(
                                 selected = currentRoute == NavRoute.Explorer,
-                                onClick = {
-                                    backStack.clear()
-                                    backStack.add(NavRoute.Explorer)
-                                },
+                                onClick = { resetToRoute(NavRoute.Explorer) },
                                 icon = { 
                                     Box(
                                         modifier = Modifier
@@ -145,10 +151,7 @@ fun MainNavigation(authRepository: AuthRepository) {
                             )
                             NavigationBarItem(
                                 selected = currentRoute == NavRoute.Bookings,
-                                onClick = {
-                                    backStack.clear()
-                                    backStack.add(NavRoute.Bookings)
-                                },
+                                onClick = { resetToRoute(NavRoute.Bookings) },
                                 icon = { 
                                     Box(
                                         modifier = Modifier
@@ -172,10 +175,7 @@ fun MainNavigation(authRepository: AuthRepository) {
                             )
                             NavigationBarItem(
                                 selected = currentRoute == NavRoute.Messages,
-                                onClick = {
-                                    backStack.clear()
-                                    backStack.add(NavRoute.Messages)
-                                },
+                                onClick = { resetToRoute(NavRoute.Messages) },
                                 icon = { 
                                     Box(
                                         modifier = Modifier
@@ -199,10 +199,7 @@ fun MainNavigation(authRepository: AuthRepository) {
                             )
                             NavigationBarItem(
                                 selected = currentRoute == NavRoute.Profile,
-                                onClick = {
-                                    backStack.clear()
-                                    backStack.add(NavRoute.Profile)
-                                },
+                                onClick = { resetToRoute(NavRoute.Profile) },
                                 icon = { 
                                     Box(
                                         modifier = Modifier
@@ -231,21 +228,13 @@ fun MainNavigation(authRepository: AuthRepository) {
         },
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { innerPadding ->
-        AnimatedContent(
-            targetState = currentRoute,
-            transitionSpec = {
-                (fadeIn(animationSpec = tween(280, easing = FastOutSlowInEasing)) + scaleIn(initialScale = 0.96f, animationSpec = tween(280, easing = FastOutSlowInEasing)))
-                    .togetherWith(fadeOut(animationSpec = tween(200, easing = FastOutSlowInEasing)) + scaleOut(targetScale = 1.02f, animationSpec = tween(200, easing = FastOutSlowInEasing)))
-            },
-            label = "PageTransition",
-        ) { targetRoute ->
-            NavDisplay(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .then(Modifier.graphicsLayer { alpha = if (targetRoute == currentRoute) 1f else 0.99f }), // Dummy use of targetRoute
-                backStack = backStack,
-                onBack = { if (backStack.size > 1) backStack.removeLastOrNull() },
-            ) { key ->
+        NavDisplay(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize(),
+            backStack = backStack,
+            onBack = { if (backStack.size > 1) backStack.removeLastOrNull() },
+        ) { key ->
                 when (key) {
                     is NavRoute.Splash -> NavEntry(key) {
                         Box(
@@ -290,10 +279,7 @@ fun MainNavigation(authRepository: AuthRepository) {
                     is NavRoute.Login -> NavEntry(key) {
                         LoginScreen(
                             viewModel = hiltViewModel(),
-                            onNavigateToHome = {
-                                backStack.clear()
-                                backStack.add(NavRoute.Explorer)
-                            },
+                            onNavigateToHome = { resetToRoute(NavRoute.Explorer) },
                             onNavigateToRegister = { backStack.add(NavRoute.Registration) },
                             onNavigateToForgotEmail = { backStack.add(NavRoute.ForgotEmail) },
                         ) {
@@ -303,29 +289,24 @@ fun MainNavigation(authRepository: AuthRepository) {
                     is NavRoute.ForgotEmail -> NavEntry(key) {
                         ForgotEmailScreen(
                             viewModel = hiltViewModel(),
-                            onNavigateBack = { backStack.removeLastOrNull() },
+                            onNavigateBack = popBack,
                         ) {
-                            backStack.clear()
-                            backStack.add(NavRoute.Registration)
+                            resetToRoute(NavRoute.Registration)
                         }
                     }
                     is NavRoute.ForgotPassword -> NavEntry(key) {
                         ForgotPasswordScreen(
                             viewModel = hiltViewModel(),
-                            onNavigateBack = { backStack.removeLastOrNull() },
+                            onNavigateBack = popBack,
                         ) {
-                            backStack.clear()
-                            backStack.add(NavRoute.Registration)
+                            resetToRoute(NavRoute.Registration)
                         }
                     }
                     is NavRoute.Registration -> NavEntry(key) {
                         RegistrationScreen(
                             viewModel = hiltViewModel(),
-                            onNavigateToHome = {
-                                backStack.clear()
-                                backStack.add(NavRoute.Login)
-                            },
-                        ) { backStack.removeLastOrNull() }
+                            onNavigateToHome = { resetToRoute(NavRoute.Login) },
+                        ) { popBack() }
                     }
                     is NavRoute.Explorer -> NavEntry(key) {
                         ExplorerScreen(
@@ -334,17 +315,14 @@ fun MainNavigation(authRepository: AuthRepository) {
                             onNavigateToPublicProfile = { userId -> backStack.add(NavRoute.PublicProfile(userId)) },
                             onNavigateToBookingFlow = { postId -> backStack.add(NavRoute.BookingFlow(postId)) },
                             onNavigateToFavorites = { backStack.add(NavRoute.Favorites) },
-                            onNavigateToProfile = {
-                                backStack.clear()
-                                backStack.add(NavRoute.Profile)
-                            }
+                            onNavigateToProfile = { resetToRoute(NavRoute.Profile) }
                         )
                     }
                     is NavRoute.CreatePost -> NavEntry(key) {
                         PostManagementScreen(
                             viewModel = hiltViewModel(),
                             postId = key.postId,
-                        ) { backStack.removeLastOrNull() }
+                        ) { popBack() }
                     }
                     is NavRoute.Profile -> NavEntry(key) {
                         ProfileViewScreen(
@@ -353,27 +331,26 @@ fun MainNavigation(authRepository: AuthRepository) {
                             explorerViewModel = hiltViewModel(),
                             onNavigateToSettings = { backStack.add(NavRoute.Settings) },
                             onNavigateToPostDetail = { /* Handled */ },
-                        ) { backStack.removeLastOrNull() }
+                        ) { popBack() }
                     }
                     is NavRoute.Settings -> NavEntry(key) {
                         SettingsScreen(
                             viewModel = hiltViewModel(),
-                            onNavigateBack = { backStack.removeLastOrNull() },
+                            onNavigateBack = popBack,
                             onNavigateToEditProfile = { backStack.add(NavRoute.ProfileEdit) },
                         ) {
-                            backStack.clear()
-                            backStack.add(NavRoute.Login)
+                            resetToRoute(NavRoute.Login)
                         }
                     }
                     is NavRoute.ProfileEdit -> NavEntry(key) {
                         EditProfileScreen(
                             viewModel = hiltViewModel(),
-                        ) { backStack.removeLastOrNull() }
+                        ) { popBack() }
                     }
                     is NavRoute.Favorites -> NavEntry(key) {
                         FavoritesScreen(
                             viewModel = hiltViewModel(),
-                            onNavigateBack = { backStack.removeLastOrNull() },
+                            onNavigateBack = popBack,
                         ) { postId -> backStack.add(NavRoute.BookingFlow(postId)) }
                     }
                     is NavRoute.PublicProfile -> NavEntry(key) {
@@ -384,13 +361,13 @@ fun MainNavigation(authRepository: AuthRepository) {
                             userId = key.userId,
                             onNavigateToSettings = {},
                             onNavigateToPostDetail = { /* Handled */ },
-                        ) { backStack.removeLastOrNull() }
+                        ) { popBack() }
                     }
                     is NavRoute.Bookings -> NavEntry(key) {
                         BookingListScreen(
                             viewModel = hiltViewModel(),
                             profileViewModel = hiltViewModel(),
-                            onNavigateBack = { backStack.removeLastOrNull() },
+                            onNavigateBack = popBack,
                         ) { sessionId, name ->
                             backStack.add(NavRoute.Chat(sessionId, name))
                         }
@@ -399,14 +376,14 @@ fun MainNavigation(authRepository: AuthRepository) {
                         BookingFlowScreen(
                             viewModel = hiltViewModel(),
                             postId = key.postId,
-                        ) { backStack.removeLastOrNull() }
+                        ) { popBack() }
                     }
                     is NavRoute.Chat -> NavEntry(key) {
                         ChatScreen(
                             viewModel = hiltViewModel(),
                             sessionId = key.sessionId,
                             otherPartyName = key.otherPartyName,
-                            onNavigateBack = { backStack.removeLastOrNull() },
+                            onNavigateBack = popBack,
                         ) { userId -> backStack.add(NavRoute.PublicProfile(userId)) }
                     }
                     is NavRoute.Messages -> NavEntry(key) {
@@ -420,5 +397,4 @@ fun MainNavigation(authRepository: AuthRepository) {
                 }
             }
     }
-}
 }

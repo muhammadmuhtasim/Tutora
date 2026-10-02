@@ -124,15 +124,17 @@ class AuthRepositoryImpl @Inject constructor(
                 null
             }
 
-            var user = userDoc?.toObject(User::class.java)
+            var user = userDoc?.toObject(User::class.java)?.let { if (it.id.isEmpty()) it.copy(id = docId) else it }
 
             if (user == null) {
                 // Profile Healing: recreate user in Firestore if missing
+                val determinedRole = if (normalizedEmail.contains("tutor")) UserRole.TUTOR else UserRole.STUDENT
                 val healedUser = User(
                     id = docId,
                     authUid = authUid,
                     email = normalizedEmail,
                     password = cleanPassword,
+                    role = determinedRole,
                     name = normalizedEmail.substringBefore("@").replaceFirstChar { it.uppercase() }
                 )
                 try {
@@ -155,7 +157,7 @@ class AuthRepositoryImpl @Inject constructor(
             try {
                 val userDoc = firestore.collection("users").document(docId).get().await()
                 if (userDoc.exists()) {
-                    val user = userDoc.toObject(User::class.java)
+                    val user = userDoc.toObject(User::class.java)?.let { if (it.id.isEmpty()) it.copy(id = docId) else it }
                     if (user != null && (user.password == cleanPassword || user.password == password)) {
                         Log.d("AuthRepository", "Fallback profile password match for $docId")
                         shadowUser = user
@@ -171,9 +173,29 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getCurrentUser(): AppResult<User?> {
-        if (shadowUser != null) return AppResult.Success(shadowUser)
+        val firebaseUser = auth.currentUser
+        if (firebaseUser == null) {
+            val shadow = shadowUser
+            if (shadow != null && shadow.email.isNotBlank() && shadow.password.isNotBlank()) {
+                try {
+                    val loginRes = auth.signInWithEmailAndPassword(shadow.email, shadow.password).await()
+                    if (loginRes.user != null) {
+                        return AppResult.Success(shadow)
+                    }
+                } catch (e: Exception) {
+                    Log.w("AuthRepository", "Reauth failed for shadowUser: ${e.message}")
+                }
+            }
+            shadowUser = null
+            return AppResult.Success(null)
+        }
+
+        if (shadowUser != null) {
+            val userWithUid = if (shadowUser?.authUid.isNullOrBlank()) shadowUser?.copy(authUid = firebaseUser.uid) else shadowUser
+            if (userWithUid != shadowUser) shadowUser = userWithUid
+            return AppResult.Success(shadowUser)
+        }
         
-        val firebaseUser = auth.currentUser ?: return AppResult.Success(null)
         val email = firebaseUser.email ?: return AppResult.Success(null)
         val docId = getEmailDocId(email)
 
@@ -193,18 +215,21 @@ class AuthRepositoryImpl @Inject constructor(
         
         return try {
             val userDoc = firestore.collection("users").document(docId).get().await()
-            val user = userDoc.toObject(User::class.java)
+            val user = userDoc.toObject(User::class.java)?.let { if (it.id.isEmpty()) it.copy(id = docId) else it }
             if (user != null) {
-                shadowUser = user
-                AppResult.Success(user)
+                val userWithUid = if (user.authUid.isBlank()) user.copy(authUid = firebaseUser.uid) else user
+                shadowUser = userWithUid
+                AppResult.Success(userWithUid)
             } else {
-                val fallbackUser = User(id = docId, authUid = firebaseUser.uid, email = email)
+                val determinedRole = shadowUser?.role ?: if (email.lowercase().contains("tutor")) UserRole.TUTOR else UserRole.STUDENT
+                val fallbackUser = User(id = docId, authUid = firebaseUser.uid, email = email, role = determinedRole)
                 shadowUser = fallbackUser
                 AppResult.Success(fallbackUser)
             }
         } catch (e: Exception) {
             Log.e("AuthRepository", "Fetch current user fallback", e)
-            val fallbackUser = User(id = docId, authUid = firebaseUser.uid, email = email)
+            val determinedRole = shadowUser?.role ?: if (email.lowercase().contains("tutor")) UserRole.TUTOR else UserRole.STUDENT
+            val fallbackUser = User(id = docId, authUid = firebaseUser.uid, email = email, role = determinedRole)
             shadowUser = fallbackUser
             AppResult.Success(fallbackUser)
         }
@@ -224,7 +249,7 @@ class AuthRepositoryImpl @Inject constructor(
                         return@addSnapshotListener
                     }
                     if (snapshot != null) {
-                        val user = snapshot.toObject(User::class.java)
+                        val user = snapshot.toObject(User::class.java)?.let { if (it.id.isEmpty()) it.copy(id = docId) else it }
                         if (user != null) shadowUser = user
                         trySend(shadowUser)
                     }
@@ -260,7 +285,8 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun getUserById(userId: String): AppResult<User?> {
         return try {
             val userDoc = firestore.collection("users").document(userId).get().await()
-            AppResult.Success(userDoc.toObject(User::class.java))
+            val user = userDoc.toObject(User::class.java)?.let { if (it.id.isEmpty()) it.copy(id = userId) else it }
+            AppResult.Success(user)
         } catch (e: Exception) {
             AppResult.Error(AppError.Unknown(e.message ?: "Fetch user error", e))
         }
@@ -272,11 +298,38 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateUserProfile(user: User): AppResult<Unit> {
+        val targetId = if (user.id.isNotBlank()) {
+            user.id
+        } else {
+            shadowUser?.id?.ifBlank { null } ?: if (user.email.isNotBlank()) getEmailDocId(user.email) else ""
+        }
+        if (targetId.isBlank()) {
+            return AppResult.Error(AppError.Unknown("User ID or email is missing for profile update"))
+        }
+
+        var currentFirebaseUser = auth.currentUser
+        if (currentFirebaseUser == null && user.email.isNotBlank() && user.password.isNotBlank()) {
+            try {
+                val signInRes = auth.signInWithEmailAndPassword(user.email, user.password).await()
+                currentFirebaseUser = signInRes.user
+            } catch (authEx: Exception) {
+                Log.w("AuthRepository", "Re-authentication failed prior to profile update: ${authEx.message}")
+            }
+        }
+
+        var finalUser = if (user.id.isBlank()) user.copy(id = targetId) else user
+        if (currentFirebaseUser != null && currentFirebaseUser.uid.isNotBlank()) {
+            finalUser = finalUser.copy(authUid = currentFirebaseUser.uid)
+        }
+
         return try {
-            firestore.collection("users").document(user.id).set(user).await()
-            if (shadowUser?.id == user.id) shadowUser = user
+            firestore.collection("users").document(targetId).set(finalUser).await()
+            if (shadowUser == null || shadowUser?.id == targetId || shadowUser?.email == finalUser.email) {
+                shadowUser = finalUser
+            }
             AppResult.Success(Unit)
         } catch (e: Exception) {
+            Log.e("AuthRepository", "Failed to update user profile for $targetId", e)
             AppResult.Error(AppError.Unknown(e.message ?: "Update profile failed", e))
         }
     }
@@ -562,7 +615,6 @@ class BookingRepositoryImpl @Inject constructor(
         val field = if (role == UserRole.STUDENT) "studentId" else "tutorId"
         val subscription = firestore.collection("bookings")
             .whereEqualTo(field, userId)
-            .orderBy("timestamp", Query.Direction.DESCENDING)
             .limit(200) 
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -580,6 +632,7 @@ class BookingRepositoryImpl @Inject constructor(
                                 (now - cancellationTs) < weekInMs
                             } else true
                         }
+                        .sortedByDescending { it.timestamp }
                     trySend(bookings)
                 }
             }
@@ -654,61 +707,88 @@ class PostRepositoryImpl @Inject constructor(
         minRating: Double?,
         searchQuery: String?,
         limit: Int
-    ): Flow<List<Post>> = flow {
+    ): Flow<List<Post>> = callbackFlow {
+        val isCenterUnset = center.latitude == 0.0 && center.longitude == 0.0
         val centerLocation = GeoLocation(center.latitude, center.longitude)
         val radiusInM = radiusInKm * 1000.0
 
-        val bounds = GeoFireUtils.getGeoHashQueryBounds(centerLocation, radiusInM)
         val queryKeywords = searchQuery?.lowercase()?.trim()?.split(" ")?.filter { it.length > 2 }
-        
-        coroutineScope {
-            val tasks = bounds.map { b ->
-                async {
-                    try {
-                        val snap = firestore.collection("posts")
-                            .orderBy("geohash")
-                            .startAt(b.startHash)
-                            .endAt(b.endHash)
-                            .limit(limit.toLong()) 
-                            .get()
-                            .await()
-                        
-                        snap.documents.mapNotNull { doc ->
-                            try {
-                                val post = doc.toObject(Post::class.java) ?: return@mapNotNull null
-                                val docLoc = GeoLocation(post.location.latitude, post.location.longitude)
-                                val distanceInM = GeoFireUtils.getDistanceBetween(docLoc, centerLocation)
-                                
-                                if (distanceInM <= radiusInM) {
-                                    if (type != null && post.type != type) return@mapNotNull null
-                                    if (classType != null && post.classType != classType) return@mapNotNull null
-                                    if (subjects != null && !post.subjects.containsAll(subjects)) return@mapNotNull null
-                                    if (tags != null && !post.tags.containsAll(tags)) return@mapNotNull null
-                                    if (minPrice != null && post.amount < minPrice) return@mapNotNull null
-                                    if (maxPrice != null && post.amount > maxPrice) return@mapNotNull null
-                                    
-                                    if (!queryKeywords.isNullOrEmpty()) {
-                                        val content = (post.creatorName + " " + post.description + " " + post.subjects.joinToString(" ")).lowercase()
-                                        val match = queryKeywords.all { content.contains(it) }
-                                        if (!match) return@mapNotNull null
-                                    }
-                                    
-                                    post
-                                } else null
-                            } catch (e: Exception) {
-                                Log.e("PostRepository", "Error parsing post document ${doc.id}", e)
-                                null
-                            }
-                        }
-                    } catch (e: Exception) {
-                        Log.e("PostRepository", "Query error for bound", e)
-                        emptyList<Post>()
+
+        fun filterPost(post: Post): Boolean {
+            if (type != null && post.type != type) return false
+            if (!classType.isNullOrBlank() && !post.classType.equals(classType, ignoreCase = true)) return false
+            if (!subjects.isNullOrEmpty() && !post.subjects.containsAll(subjects)) return false
+            if (!tags.isNullOrEmpty() && !post.tags.containsAll(tags)) return false
+            if (minPrice != null && post.amount < minPrice) return false
+            if (maxPrice != null && post.amount > maxPrice) return false
+
+            if (!isCenterUnset && post.location.latitude != 0.0 && post.location.longitude != 0.0) {
+                val docLoc = GeoLocation(post.location.latitude, post.location.longitude)
+                val distanceInM = GeoFireUtils.getDistanceBetween(docLoc, centerLocation)
+                if (distanceInM > radiusInM) return false
+            }
+
+            if (!queryKeywords.isNullOrEmpty()) {
+                val content = (post.creatorName + " " + post.description + " " + post.subjects.joinToString(" ")).lowercase()
+                val match = queryKeywords.all { content.contains(it) }
+                if (!match) return false
+            }
+
+            return true
+        }
+
+        val listeners = mutableListOf<com.google.firebase.firestore.ListenerRegistration>()
+
+        if (isCenterUnset) {
+            val sub = firestore.collection("posts")
+                .limit(limit.toLong())
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        Log.w("PostRepository", "Error fetching all posts: ${error.message}")
+                        trySend(emptyList())
+                        return@addSnapshotListener
+                    }
+                    if (snapshot != null) {
+                        val posts = snapshot.documents.mapNotNull { doc ->
+                            try { doc.toObject(Post::class.java) } catch (e: Exception) { null }
+                        }.filter { filterPost(it) }
+                        trySend(posts.distinctBy { it.id }.sortedByDescending { it.createdAt })
                     }
                 }
+            listeners.add(sub)
+        } else {
+            val bounds = GeoFireUtils.getGeoHashQueryBounds(centerLocation, radiusInM)
+            val boundResults = mutableMapOf<Int, List<Post>>()
+
+            bounds.forEachIndexed { index, b ->
+                val sub = firestore.collection("posts")
+                    .orderBy("geohash")
+                    .startAt(b.startHash)
+                    .endAt(b.endHash)
+                    .limit(limit.toLong())
+                    .addSnapshotListener { snapshot, error ->
+                        if (error != null) {
+                            Log.w("PostRepository", "Error fetching posts for bound $index: ${error.message}")
+                            return@addSnapshotListener
+                        }
+                        if (snapshot != null) {
+                            val parsed = snapshot.documents.mapNotNull { doc ->
+                                try { doc.toObject(Post::class.java) } catch (e: Exception) { null }
+                            }.filter { filterPost(it) }
+
+                            boundResults[index] = parsed
+                            val combined = boundResults.values.flatten()
+                                .distinctBy { it.id }
+                                .sortedByDescending { it.createdAt }
+                            trySend(combined)
+                        }
+                    }
+                listeners.add(sub)
             }
-            
-            val allPosts = tasks.awaitAll().flatten()
-            emit(allPosts.distinctBy { it.id }.sortedByDescending { it.createdAt })
+        }
+
+        awaitClose {
+            listeners.forEach { it.remove() }
         }
     }.flowOn(Dispatchers.IO)
 

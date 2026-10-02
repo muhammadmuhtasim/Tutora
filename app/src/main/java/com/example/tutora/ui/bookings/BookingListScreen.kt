@@ -64,35 +64,60 @@ fun BookingListScreen(
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
             } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 340.dp),
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = adaptivePadding,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(uiState.bookings) { booking ->
-                        val otherUserId = if (uiState.userRole == UserRole.TUTOR) booking.studentId else booking.tutorId
-                        val otherUser = uiState.otherParties[otherUserId]
-                        BookingCard(
-                            booking = booking,
-                            otherUser = otherUser,
-                            isTutor = uiState.userRole == UserRole.TUTOR,
-                            onApprove = { viewModel.approveBooking(booking.id) },
-                            onReject = { viewModel.rejectBooking(booking.id) },
-                            onCancel = { viewModel.cancelBooking(booking.id, immediate = booking.status == BookingStatus.PENDING) },
-                            onComplete = { viewModel.completeBooking(booking.id) },
-                            onStartPreparing = { viewModel.startPreparing(booking.id) },
-                            onStartJourney = { viewModel.startJourney(booking.id) },
-                            onMarkArrived = { viewModel.markArrived(booking.id) },
-                            onDelete = { viewModel.deleteBooking(booking.id) },
-                            onRate = { showRateDialogForUserId = otherUserId },
-                            onChatClick = {
-                                viewModel.onChatClicked(booking) { sessionId ->
-                                    onNavigateToChat(sessionId, otherUser?.name ?: "User")
-                                }
-                            }
+                    BookingFilter.entries.forEach { filter ->
+                        FilterChip(
+                            selected = uiState.selectedFilter == filter,
+                            onClick = { viewModel.setFilter(filter) },
+                            label = { Text(filter.name.lowercase().replaceFirstChar { it.uppercase() }) }
                         )
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                if (uiState.filteredBookings.isEmpty()) {
+                    TutoraEmptyState(
+                        message = "No bookings match this filter",
+                        icon = Icons.Default.FilterList,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                } else {
+                    LazyVerticalGrid(
+                        columns = GridCells.Adaptive(minSize = 340.dp),
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = adaptivePadding,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(uiState.filteredBookings) { booking ->
+                            val otherUserId = if (uiState.userRole == UserRole.TUTOR) booking.studentId else booking.tutorId
+                            val otherUser = uiState.otherParties[otherUserId]
+                            BookingCard(
+                                booking = booking,
+                                otherUser = otherUser,
+                                isTutor = uiState.userRole == UserRole.TUTOR,
+                                onApprove = { viewModel.approveBooking(booking.id) },
+                                onReject = { viewModel.rejectBooking(booking.id) },
+                                onCancel = { viewModel.cancelBooking(booking.id, immediate = booking.status == BookingStatus.PENDING) },
+                                onComplete = { viewModel.completeBooking(booking.id) },
+                                onStartPreparing = { viewModel.startPreparing(booking.id) },
+                                onStartJourney = { viewModel.startJourney(booking.id) },
+                                onMarkArrived = { viewModel.markArrived(booking.id) },
+                                onDelete = { viewModel.deleteBooking(booking.id) },
+                                onRate = { showRateDialogForUserId = otherUserId },
+                                onChatClick = {
+                                    viewModel.onChatClicked(booking) { sessionId ->
+                                        onNavigateToChat(sessionId, otherUser?.name ?: "User")
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             }

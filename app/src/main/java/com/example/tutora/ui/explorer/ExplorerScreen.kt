@@ -121,25 +121,6 @@ fun ExplorerScreen(
                     }
                 }
 
-                val popularTags = listOf("Online", "Home", "Math", "English", "Science", "Arts")
-                androidx.compose.foundation.lazy.LazyRow(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(popularTags) { tag ->
-                        val isSelected = uiState.filters.tags?.contains(tag) == true
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = { viewModel.toggleTag(tag) },
-                            label = { Text(tag) },
-                            leadingIcon = if (isSelected) {
-                                { Icon(Icons.Default.Done, null, modifier = Modifier.size(16.dp)) }
-                            } else null
-                        )
-                    }
-                }
-
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             }
 
@@ -154,17 +135,6 @@ fun ExplorerScreen(
                 ) {
                     if (uiState.isLoading && !uiState.isRefreshing) {
                         TutoraLoadingIndicator(modifier = Modifier.align(Alignment.Center))
-                    } else if (uiState.user?.location?.latitude == 0.0 && uiState.user?.location?.longitude == 0.0) {
-                        Box(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()), contentAlignment = Alignment.Center) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                                Icon(Icons.Default.LocationOff, null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
-                                Text("Location Not Set", style = MaterialTheme.typography.titleLarge)
-                                Text("Please set your location in your profile to find nearby tutors.", textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 32.dp))
-                                Button(onClick = onNavigateToProfile) {
-                                    Text("Go to Profile")
-                                }
-                            }
-                        }
                     } else if (uiState.error != null && uiState.posts.isEmpty()) {
                         Box(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()), contentAlignment = Alignment.Center) {
                             TutoraErrorView(
@@ -174,14 +144,29 @@ fun ExplorerScreen(
                         }
                     } else if (uiState.posts.isEmpty()) {
                         Box(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()), contentAlignment = Alignment.Center) {
-                            TutoraEmptyState(
-                                message = if (uiState.userRole == UserRole.STUDENT) "No Tutors found in your area" else "No tuition requests available",
-                                onAction = {
-                                    createPostViewModel.resetState()
-                                    showCreatePostModal = true
-                                },
-                                actionLabel = "Post"
-                            )
+                            if (uiState.user?.location?.latitude == 0.0 && uiState.user?.location?.longitude == 0.0) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                                    Icon(Icons.Default.LocationOff, null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
+                                    Text("Location Not Set", style = MaterialTheme.typography.titleLarge)
+                                    Text(
+                                        if (uiState.userRole == UserRole.STUDENT) "Please set your location in your profile to find nearby tutors." else "Please set your location in your profile to find nearby tuition requests.",
+                                        textAlign = TextAlign.Center, 
+                                        modifier = Modifier.padding(horizontal = 32.dp)
+                                    )
+                                    Button(onClick = onNavigateToProfile) {
+                                        Text("Go to Profile")
+                                    }
+                                }
+                            } else {
+                                TutoraEmptyState(
+                                    message = if (uiState.userRole == UserRole.STUDENT) "No Tutors found in your area" else "No tuition requests available in your area",
+                                    onAction = {
+                                        createPostViewModel.resetState()
+                                        showCreatePostModal = true
+                                    },
+                                    actionLabel = "Post"
+                                )
+                            }
                         }
                     } else {
                         Row(modifier = Modifier.fillMaxSize()) {

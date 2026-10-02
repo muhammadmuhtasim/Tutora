@@ -9,14 +9,27 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
+enum class BookingFilter {
+    ALL, PENDING, ACTIVE, COMPLETED
+}
+
 data class BookingUiState(
     val bookings: List<Booking> = emptyList(),
     val otherParties: Map<String, User> = emptyMap(), // userId -> User
     val isLoading: Boolean = false,
     val currentUserId: String = "",
     val userRole: UserRole = UserRole.STUDENT,
-    val error: String? = null
-)
+    val error: String? = null,
+    val selectedFilter: BookingFilter = BookingFilter.ALL
+) {
+    val filteredBookings: List<Booking>
+        get() = when (selectedFilter) {
+            BookingFilter.ALL -> bookings
+            BookingFilter.PENDING -> bookings.filter { it.status == BookingStatus.PENDING }
+            BookingFilter.ACTIVE -> bookings.filter { it.status in listOf(BookingStatus.ACCEPTED, BookingStatus.PREPARING, BookingStatus.ON_THE_WAY, BookingStatus.ARRIVED) }
+            BookingFilter.COMPLETED -> bookings.filter { it.status in listOf(BookingStatus.COMPLETED, BookingStatus.REJECTED, BookingStatus.CANCELLED) }
+        }
+}
 
 @HiltViewModel
 class BookingViewModel @Inject constructor(
@@ -139,6 +152,10 @@ class BookingViewModel @Inject constructor(
                 onResolved(result.data)
             }
         }
+    }
+
+    fun setFilter(filter: BookingFilter) {
+        _uiState.update { it.copy(selectedFilter = filter) }
     }
 
     fun resetState() {
