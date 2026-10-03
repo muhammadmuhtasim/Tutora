@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextAlign
 import com.example.tutora.domain.Post
 import com.example.tutora.ui.theme.TutoraStyles
 import com.example.tutora.ui.theme.TutoraStyles.adaptivePadding
@@ -66,20 +67,23 @@ fun PostManagementScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .statusBarsPadding()
-                    .padding(top = 16.dp, start = 24.dp, end = 16.dp, bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .padding(top = 16.dp, start = 8.dp, end = 16.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                Box(modifier = Modifier.size(48.dp))
                 Text(
                     "Hub",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                    modifier = Modifier.padding(start = 48.dp) // Space for back button
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center
                 )
                 if (selectedSegment == 1 && uiState.id != null) {
                     IconButton(onClick = { showDeleteDialog = true }) {
                         Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error)
                     }
+                } else {
+                    Box(modifier = Modifier.size(48.dp))
                 }
             }
 

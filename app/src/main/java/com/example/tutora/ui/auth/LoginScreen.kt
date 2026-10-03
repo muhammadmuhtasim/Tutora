@@ -3,9 +3,11 @@ package com.example.tutora.ui.auth
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -67,8 +69,10 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(adaptivePadding)
-                .systemBarsPadding(),
-            horizontalAlignment = Alignment.Start,
+                .systemBarsPadding()
+                .imePadding()
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Column(
@@ -131,7 +135,7 @@ fun LoginScreen(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
                 ) {
                     TextButton(onClick = onNavigateToForgotEmail) {
                         Text("Forgot Email?", style = MaterialTheme.typography.labelMedium)

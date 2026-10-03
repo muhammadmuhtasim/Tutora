@@ -38,8 +38,9 @@ fun BookingFlowScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
         ) {
-            Spacer(Modifier.height(80.dp))
+            Spacer(Modifier.height(72.dp))
             Text(
                 "Book Session",
                 style = MaterialTheme.typography.headlineMedium,

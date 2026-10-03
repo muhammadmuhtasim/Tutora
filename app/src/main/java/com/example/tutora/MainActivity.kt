@@ -5,9 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.compose.animation.*
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -22,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -74,7 +70,7 @@ fun MainNavigation(authRepository: AuthRepository) {
     val backStack = remember { mutableStateListOf<Any>(NavRoute.Splash) }
 
     fun resetToRoute(route: Any) {
-        if (backStack.lastOrNull() == route && backStack.size == 1) return
+        if ((backStack.lastOrNull() == route) && (backStack.size == 1)) return
         backStack.add(route)
         while (backStack.size > 1) {
             backStack.removeAt(0)
@@ -89,7 +85,7 @@ fun MainNavigation(authRepository: AuthRepository) {
             val currentUserResult = authRepository.getCurrentUser()
             delay(1000.milliseconds) 
             
-            if (currentUserResult is AppResult.Success && currentUserResult.data != null) {
+            if ((currentUserResult is AppResult.Success) && (currentUserResult.data != null)) {
                 resetToRoute(NavRoute.Explorer)
             } else {
                 resetToRoute(NavRoute.Login)
@@ -315,8 +311,7 @@ fun MainNavigation(authRepository: AuthRepository) {
                             onNavigateToPublicProfile = { userId -> backStack.add(NavRoute.PublicProfile(userId)) },
                             onNavigateToBookingFlow = { postId -> backStack.add(NavRoute.BookingFlow(postId)) },
                             onNavigateToFavorites = { backStack.add(NavRoute.Favorites) },
-                            onNavigateToProfile = { resetToRoute(NavRoute.Profile) }
-                        )
+                        ) { resetToRoute(NavRoute.Profile) }
                     }
                     is NavRoute.CreatePost -> NavEntry(key) {
                         PostManagementScreen(
@@ -327,7 +322,6 @@ fun MainNavigation(authRepository: AuthRepository) {
                     is NavRoute.Profile -> NavEntry(key) {
                         ProfileViewScreen(
                             viewModel = hiltViewModel(),
-                            createPostViewModel = hiltViewModel<CreatePostViewModel>(),
                             explorerViewModel = hiltViewModel(),
                             onNavigateToSettings = { backStack.add(NavRoute.Settings) },
                             onNavigateToPostDetail = { /* Handled */ },
@@ -356,7 +350,6 @@ fun MainNavigation(authRepository: AuthRepository) {
                     is NavRoute.PublicProfile -> NavEntry(key) {
                         ProfileViewScreen(
                             viewModel = hiltViewModel(),
-                            createPostViewModel = hiltViewModel<CreatePostViewModel>(),
                             explorerViewModel = hiltViewModel(),
                             userId = key.userId,
                             onNavigateToSettings = {},

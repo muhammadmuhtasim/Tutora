@@ -1,19 +1,16 @@
 package com.example.tutora.ui.profile
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -24,28 +21,25 @@ import com.example.tutora.ui.components.RateUserDialog
 import com.example.tutora.ui.components.TutoraEmptyState
 import com.example.tutora.ui.components.TutoraLoadingIndicator
 import com.example.tutora.ui.components.FloatingBackButton
-import com.example.tutora.ui.explorer.CreatePostViewModel
 import com.example.tutora.ui.explorer.ExplorerViewModel
 import com.example.tutora.ui.explorer.PostCard
 import com.example.tutora.ui.theme.RatingGold
-import com.example.tutora.ui.theme.TutoraStyles
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileViewScreen(
     viewModel: ProfileViewModel,
-    createPostViewModel: CreatePostViewModel,
     explorerViewModel: ExplorerViewModel,
     userId: String? = null, // null for current user
     onNavigateToSettings: () -> Unit,
     onNavigateToPostDetail: (String) -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val explorerUiState by explorerViewModel.uiState.collectAsState()
-    val isMine = userId == null || userId == uiState.user?.id
-    var showRateDialog by remember { mutableStateOf(false) }
+    val isMine = (userId == null) || (userId == uiState.user?.id)
+    var showRateDialog by remember { mutableStateOf(value = false) }
     var activeSubPage by remember { mutableStateOf("Feeds") }
 
     LaunchedEffect(userId) {
@@ -62,7 +56,7 @@ fun ProfileViewScreen(
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 16.dp)
+                contentPadding = PaddingValues(bottom = 16.dp),
             ) {
                 // a. Profile Pic, Settings/Back icon
                 item {
@@ -73,7 +67,7 @@ fun ProfileViewScreen(
                         onSettings = onNavigateToSettings,
                         onToggleBlock = { viewModel.toggleBlock(userId ?: "") },
                         onReport = { reason -> viewModel.reportUser(userId ?: "", reason) },
-                        isBlocked = uiState.isBlocked
+                        isBlocked = uiState.isBlocked,
                     )
                 }
 
@@ -88,7 +82,7 @@ fun ProfileViewScreen(
                         Button(
                             onClick = { showRateDialog = true },
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-                            shape = MaterialTheme.shapes.large
+                            shape = MaterialTheme.shapes.large,
                         ) {
                             Icon(Icons.Default.Star, null)
                             Spacer(Modifier.width(8.dp))
@@ -104,8 +98,7 @@ fun ProfileViewScreen(
                     SubPageTabs(
                         isMine = isMine,
                         activeSubPage = activeSubPage,
-                        onTabClick = { activeSubPage = it }
-                    )
+                    ) { activeSubPage = it }
                 }
 
                 if (activeSubPage == "Feeds") {
@@ -120,7 +113,7 @@ fun ProfileViewScreen(
                                     post = post,
                                     isFavorite = explorerUiState.user?.favorites?.contains(post.id) == true,
                                     onFavoriteToggle = { explorerViewModel.toggleFavorite(post.id) },
-                                    onClick = { onNavigateToPostDetail(post.id) }
+                                    onClick = { onNavigateToPostDetail(post.id) },
                                 )
                             }
                         }
@@ -138,7 +131,7 @@ fun ProfileViewScreen(
                                     post = post,
                                     isFavorite = true,
                                     onFavoriteToggle = { explorerViewModel.toggleFavorite(post.id) },
-                                    onClick = { onNavigateToPostDetail(post.id) }
+                                    onClick = { onNavigateToPostDetail(post.id) },
                                 )
                             }
                         }
@@ -155,14 +148,13 @@ fun ProfileViewScreen(
         }
     }
 
-    if (showRateDialog && userId != null) {
+    if (showRateDialog && (userId != null)) {
         RateUserDialog(
             onDismiss = { showRateDialog = false },
-            onRate = { rating, comment ->
-                viewModel.rateUser(userId, rating, comment)
-                showRateDialog = false
-            }
-        )
+        ) { rating, comment ->
+            viewModel.rateUser(userId, rating, comment)
+            showRateDialog = false
+        }
     }
 }
 
@@ -174,19 +166,21 @@ fun ProfileTopActions(
     onSettings: () -> Unit,
     onToggleBlock: () -> Unit,
     onReport: (String) -> Unit,
-    isBlocked: Boolean
+    isBlocked: Boolean,
 ) {
-    var showMenu by remember { mutableStateOf(false) }
-    var showReportDialog by remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(value = false) }
+    var showReportDialog by remember { mutableStateOf(value = false) }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 8.dp)
+            .statusBarsPadding()
+            .padding(horizontal = 8.dp, vertical = 8.dp),
     ) {
         FloatingBackButton(
             onBack = onBack,
-            modifier = Modifier.align(Alignment.CenterStart)
+            modifier = Modifier.align(Alignment.CenterStart),
+            applyStatusBarPadding = false,
         )
         
         if (isMine) {
@@ -194,27 +188,26 @@ fun ProfileTopActions(
                 onClick = onSettings,
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .statusBarsPadding()
                     .padding(16.dp)
                     .size(48.dp),
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
                 tonalElevation = 6.dp,
-                shadowElevation = 6.dp
+                shadowElevation = 6.dp,
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(Icons.Default.Settings, null)
                 }
             }
         } else if (userId != null) {
-            Box(modifier = Modifier.align(Alignment.CenterEnd).statusBarsPadding().padding(16.dp)) {
+            Box(modifier = Modifier.align(Alignment.CenterEnd).padding(16.dp)) {
                 Surface(
                     onClick = { showMenu = true },
                     modifier = Modifier.size(48.dp),
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
                     tonalElevation = 6.dp,
-                    shadowElevation = 6.dp
+                    shadowElevation = 6.dp,
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(Icons.Default.MoreVert, null)
@@ -225,12 +218,12 @@ fun ProfileTopActions(
                     DropdownMenuItem(
                         text = { Text(if (isBlocked) "Unblock" else "Block", color = if (isBlocked) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error) },
                         onClick = { showMenu = false; onToggleBlock() },
-                        leadingIcon = { Icon(if (isBlocked) Icons.Default.CheckCircle else Icons.Default.Block, null, tint = if (isBlocked) Color.Gray else MaterialTheme.colorScheme.error) }
+                        leadingIcon = { Icon(if (isBlocked) Icons.Default.CheckCircle else Icons.Default.Block, null, tint = if (isBlocked) Color.Gray else MaterialTheme.colorScheme.error) },
                     )
                     DropdownMenuItem(
                         text = { Text("Report User") },
                         onClick = { showMenu = false; showReportDialog = true },
-                        leadingIcon = { Icon(Icons.Default.Report, null) }
+                        leadingIcon = { Icon(Icons.Default.Report, null) },
                     )
                 }
             }
@@ -248,7 +241,7 @@ fun ProfileTopActions(
                     onValueChange = { reason = it },
                     placeholder = { Text("Reason...") },
                     modifier = Modifier.fillMaxWidth(),
-                    minLines = 3
+                    minLines = 3,
                 )
             },
             confirmButton = {
@@ -258,7 +251,7 @@ fun ProfileTopActions(
             },
             dismissButton = {
                 TextButton(onClick = { showReportDialog = false }) { Text("Cancel") }
-            }
+            },
         )
     }
 }
@@ -268,13 +261,13 @@ fun ProfileInfoSection(user: User?) {
     user?.let {
         Column(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             // Profile Pic
             ProfileAvatar(
                 imageUrl = it.profileImageUrl,
                 name = it.name,
-                size = 90
+                size = 90,
             )
             
             Spacer(Modifier.height(12.dp))
@@ -284,9 +277,9 @@ fun ProfileInfoSection(user: User?) {
             
             // c. User Role
             Text(
-                it.role.name.lowercase().replaceFirstChar { it.titlecase() },
+                it.role.name.lowercase().replaceFirstChar { char -> char.titlecase() },
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
             )
             
             Spacer(Modifier.height(12.dp))
@@ -320,13 +313,13 @@ fun ProfileInfoSection(user: User?) {
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
                     shape = MaterialTheme.shapes.medium,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(
                         it.bio,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(12.dp),
-                        lineHeight = 20.sp
+                        lineHeight = 20.sp,
                     )
                 }
             }
@@ -340,12 +333,12 @@ fun ProfileInfoSection(user: User?) {
 fun DetailItemCompact(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
     if (text.isEmpty()) return
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Icon(icon, null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
-        Spacer(Modifier.width(12.dp))
-        Text(text, style = MaterialTheme.typography.bodyLarge)
+        Text(text, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
     }
 }
 
@@ -355,7 +348,7 @@ fun SubPageTabs(isMine: Boolean, activeSubPage: String, onTabClick: (String) -> 
     
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         tabs.forEach { tab ->
             val selected = activeSubPage == tab
@@ -364,13 +357,13 @@ fun SubPageTabs(isMine: Boolean, activeSubPage: String, onTabClick: (String) -> 
                 shape = MaterialTheme.shapes.medium,
                 color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
                 contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             ) {
                 Text(
                     tab,
                     modifier = Modifier.padding(vertical = 8.dp),
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
         }
@@ -389,23 +382,23 @@ fun StatItem(label: String, value: String) {
 
 @Composable
 fun ReviewsSection(reviews: List<com.example.tutora.domain.Review>) {
-    var isExpanded by remember { mutableStateOf(false) }
+    var isExpanded by remember { mutableStateOf(value = false) }
     val displayReviews = if (isExpanded) reviews else reviews.take(2)
 
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 if (reviews.isNotEmpty()) "Comments & Reviews (${reviews.size})" else "Comments & Reviews",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
             if (reviews.size > 2) {
                 TextButton(onClick = { isExpanded = !isExpanded }) {
@@ -414,7 +407,7 @@ fun ReviewsSection(reviews: List<com.example.tutora.domain.Review>) {
                     Icon(
                         if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(18.dp),
                     )
                 }
             }
@@ -424,13 +417,13 @@ fun ReviewsSection(reviews: List<com.example.tutora.domain.Review>) {
             Surface(
                 shape = MaterialTheme.shapes.medium,
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
                     "No reviews yet.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(16.dp),
                 )
             }
         } else {
@@ -438,7 +431,7 @@ fun ReviewsSection(reviews: List<com.example.tutora.domain.Review>) {
                 Surface(
                     shape = MaterialTheme.shapes.medium,
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Row(
                         modifier = Modifier.padding(12.dp),
@@ -447,20 +440,20 @@ fun ReviewsSection(reviews: List<com.example.tutora.domain.Review>) {
                         ProfileAvatar(
                             imageUrl = review.reviewerProfileImageUrl,
                             name = review.reviewerName.ifEmpty { "?" },
-                            size = 36
+                            size = 36,
                         )
                         Spacer(Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 review.reviewerName.ifEmpty { "User" },
                                 style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
                             )
                             Text(
                                 review.comment,
                                 style = MaterialTheme.typography.bodyMedium,
                                 lineHeight = 18.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {

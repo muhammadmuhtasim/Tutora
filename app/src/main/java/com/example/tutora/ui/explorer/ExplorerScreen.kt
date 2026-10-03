@@ -399,14 +399,14 @@ fun SearchBar(
         )
         FilledTonalIconButton(
             onClick = onFavoriteClick,
-            modifier = Modifier.size(48.dp),
+            modifier = Modifier.size(56.dp),
             shape = MaterialTheme.shapes.large
         ) {
             Icon(Icons.Default.Favorite, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
         }
         FilledTonalIconButton(
             onClick = onFilterClick,
-            modifier = Modifier.size(48.dp),
+            modifier = Modifier.size(56.dp),
             shape = MaterialTheme.shapes.large
         ) {
             Icon(Icons.Default.Tune, null, modifier = Modifier.size(20.dp))
@@ -607,8 +607,7 @@ fun PostCard(
                     SuggestionChip(
                         onClick = {},
                         label = { Text(subject, style = MaterialTheme.typography.labelSmall) },
-                        shape = MaterialTheme.shapes.small,
-                        modifier = Modifier.height(28.dp)
+                        shape = MaterialTheme.shapes.small
                     )
                 }
             }
@@ -626,29 +625,33 @@ fun PostCard(
 
             Spacer(Modifier.height(8.dp))
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 Text(
                     "৳${post.amount.toInt()}",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
                 )
-                
-                Spacer(Modifier.width(16.dp))
-                
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Icon(Icons.Default.Favorite, null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.outline)
-                    Text(post.likesCount.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
-                }
-                
-                Spacer(Modifier.width(12.dp))
 
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Icon(Icons.Default.Visibility, null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.outline)
-                    Text(post.viewsCount.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(Icons.Default.Favorite, null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.outline)
+                        Text(post.likesCount.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                    }
+
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(Icons.Default.Visibility, null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.outline)
+                        Text(post.viewsCount.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                    }
                 }
 
-                Spacer(Modifier.weight(1f))
                 Text(
                     "${post.sessionsPerWeek}d/wk",
                     style = MaterialTheme.typography.labelSmall,

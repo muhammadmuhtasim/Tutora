@@ -1,0 +1,38 @@
+[debug] [2026-09-27T06:10:14.991Z] ----------------------------------------------------------------------
+[debug] [2026-09-27T06:10:14.995Z] Command:       /usr/bin/node /home/kali/.npm/_npx/ba4f1959e38407b5/node_modules/.bin/firebase deploy --only database
+[debug] [2026-09-27T06:10:14.996Z] CLI Version:   15.31.0
+[debug] [2026-09-27T06:10:14.996Z] Platform:      linux
+[debug] [2026-09-27T06:10:14.996Z] Node Version:  v24.19.0
+[debug] [2026-09-27T06:10:14.996Z] Detected Agent: android_studio_agent
+[debug] [2026-09-27T06:10:14.996Z] Time:          Sun Sep 27 2026 12:10:14 GMT+0600 (Bangladesh Standard Time)
+[debug] [2026-09-27T06:10:14.997Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-09-27T06:10:19.060Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-09-27T06:10:19.814Z] Running auto auth
+[debug] [2026-09-27T06:10:19.819Z] [iam] checking project tutora-25e43 for permissions ["firebase.projects.get","firebasedatabase.instances.update"]
+[debug] [2026-09-27T06:10:19.839Z] No OAuth tokens found
+[debug] [2026-09-27T06:10:19.854Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/tutora-25e43:testIamPermissions [none]
+[debug] [2026-09-27T06:10:19.857Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/tutora-25e43:testIamPermissions  x-goog-user-project=tutora-25e43
+[debug] [2026-09-27T06:10:19.858Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/tutora-25e43:testIamPermissions {"permissions":["firebase.projects.get","firebasedatabase.instances.update"]}
+[debug] [2026-09-27T06:10:26.535Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/tutora-25e43:testIamPermissions 200
+[debug] [2026-09-27T06:10:26.536Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/tutora-25e43:testIamPermissions {"permissions":["firebase.projects.get","firebasedatabase.instances.update"]}
+[debug] [2026-09-27T06:10:26.537Z] No OAuth tokens found
+[debug] [2026-09-27T06:10:26.537Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/tutora-25e43 [none]
+[debug] [2026-09-27T06:10:27.621Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/tutora-25e43 200
+[debug] [2026-09-27T06:10:27.622Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/tutora-25e43 {"projectId":"tutora-25e43","projectNumber":"732020799384","displayName":"Tutora","name":"projects/tutora-25e43","resources":{"hostingSite":"tutora-25e43","realtimeDatabaseInstance":"tutora-25e43-default-rtdb"},"state":"ACTIVE","etag":"1_23b41b69-0c02-4443-8a71-3477a1d3537b"}
+[info] 
+[info] === Deploying to 'tutora-25e43'...
+[info] 
+[info] i  deploying database 
+[info] i  database: checking rules syntax... 
+[debug] [2026-09-27T06:10:27.630Z] No OAuth tokens found
+[debug] [2026-09-27T06:10:27.630Z] >>> [apiv2][query] GET https://firebasedatabase.googleapis.com/v1beta/projects/tutora-25e43/locations/-/instances/tutora-25e43-default-rtdb [none]
+[debug] [2026-09-27T06:10:29.795Z] <<< [apiv2][status] GET https://firebasedatabase.googleapis.com/v1beta/projects/tutora-25e43/locations/-/instances/tutora-25e43-default-rtdb 403
+[debug] [2026-09-27T06:10:29.796Z] <<< [apiv2][body] GET https://firebasedatabase.googleapis.com/v1beta/projects/tutora-25e43/locations/-/instances/tutora-25e43-default-rtdb {"error":{"code":403,"message":"Your application is authenticating by using local Application Default Credentials. The firebasedatabase.googleapis.com API requires a quota project, which is not set by default. To learn how to set your quota project, see https://cloud.google.com/docs/authentication/adc-troubleshooting/user-creds .","status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","domain":"googleapis.com","metadata":{"service":"firebasedatabase.googleapis.com","consumer":"projects/764086051850"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Your application is authenticating by using local Application Default Credentials. The firebasedatabase.googleapis.com API requires a quota project, which is not set by default. To learn how to set your quota project, see https://cloud.google.com/docs/authentication/adc-troubleshooting/user-creds ."}]}}
+[debug] [2026-09-27T06:10:29.797Z] Request to https://firebasedatabase.googleapis.com/v1beta/projects/tutora-25e43/locations/-/instances/tutora-25e43-default-rtdb had HTTP Error: 403, Your application is authenticating by using local Application Default Credentials. The firebasedatabase.googleapis.com API requires a quota project, which is not set by default. To learn how to set your quota project, see https://cloud.google.com/docs/authentication/adc-troubleshooting/user-creds .
+[debug] [2026-09-27T06:10:30.455Z] FirebaseError: Request to https://firebasedatabase.googleapis.com/v1beta/projects/tutora-25e43/locations/-/instances/tutora-25e43-default-rtdb had HTTP Error: 403, Your application is authenticating by using local Application Default Credentials. The firebasedatabase.googleapis.com API requires a quota project, which is not set by default. To learn how to set your quota project, see https://cloud.google.com/docs/authentication/adc-troubleshooting/user-creds .
+    at responseToError (/home/kali/.npm/_npx/ba4f1959e38407b5/node_modules/firebase-tools/lib/responseToError.js:53:12)
+    at RetryOperation._fn (/home/kali/.npm/_npx/ba4f1959e38407b5/node_modules/firebase-tools/lib/apiv2.js:415:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+[error] 
+[error] Error: Failed to get instance details for instance: tutora-25e43-default-rtdb. See firebase-debug.log for more details.

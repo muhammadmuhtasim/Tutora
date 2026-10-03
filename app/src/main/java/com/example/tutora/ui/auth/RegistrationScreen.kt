@@ -156,9 +156,12 @@ fun StepBasicInfo(
     onPhoneChange: (String) -> Unit
 ) {
     Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(32.dp)
+        modifier = Modifier
+            .fillMaxSize()
+            .imePadding()
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         Column {
             Text("Hello", style = MaterialTheme.typography.displayLarge, color = MaterialTheme.colorScheme.primary)
@@ -268,9 +271,12 @@ fun StepLocation(
     }
 
     Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(32.dp)
+        modifier = Modifier
+            .fillMaxSize()
+            .imePadding()
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         Column {
             Text("Location", style = MaterialTheme.typography.displayLarge, color = MaterialTheme.colorScheme.primary)
@@ -300,8 +306,11 @@ fun StepQualification(
     val charLimit = 500
     
     Column(
-        modifier = Modifier.fillMaxSize().imePadding(),
-        horizontalAlignment = Alignment.Start,
+        modifier = Modifier
+            .fillMaxSize()
+            .imePadding()
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         Column {
@@ -359,7 +368,7 @@ fun StepCredentials(
 
     Column(
         modifier = Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.Start,
+        horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         Column {

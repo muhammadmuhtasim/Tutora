@@ -134,11 +134,12 @@ fun TutoraErrorView(
 @Composable
 fun FloatingBackButton(
     onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    applyStatusBarPadding: Boolean = true
 ) {
     Surface(
         modifier = modifier
-            .statusBarsPadding()
+            .then(if (applyStatusBarPadding) Modifier.statusBarsPadding() else Modifier)
             .padding(16.dp)
             .size(48.dp)
             .bounceClickable(onClick = onBack),

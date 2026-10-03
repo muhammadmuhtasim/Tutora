@@ -505,18 +505,17 @@ fun ChatInput(
     ) {
         Row(
             modifier = Modifier
-                .padding(horizontal = 4.dp, vertical = 4.dp)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(
-                onClick = { /* Attachment placeholder */ },
-                modifier = Modifier.size(44.dp)
+            FilledTonalIconButton(
+                onClick = { /* Attachment placeholder */ }
             ) {
                 Icon(
                     Icons.Default.Add,
                     contentDescription = "Attach",
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
 
@@ -548,23 +547,18 @@ fun ChatInput(
                 )
             }
 
-            IconButton(
+            FilledIconButton(
                 onClick = onSend,
                 enabled = messageText.isNotBlank(),
-                modifier = Modifier
-                    .size(44.dp)
-                    .background(
-                        if (messageText.isNotBlank()) MaterialTheme.colorScheme.primary 
-                        else Color.Transparent, 
-                        CircleShape
-                    )
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
             ) {
                 Icon(
                     Icons.AutoMirrored.Filled.Send,
                     contentDescription = "Send",
-                    modifier = Modifier.size(24.dp),
-                    tint = if (messageText.isNotBlank()) MaterialTheme.colorScheme.onPrimary 
-                           else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }
